@@ -12,6 +12,8 @@ import aont2.CryptoUtils;
 import aont2.aes_gcm;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -53,72 +55,64 @@ public class aont {
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();
 		aont aont = new aont();
-		String filePath = "/home/yeeman/Documents/2500MB.txt";
+		String filePath = "/home/yeeman/Documents/100MB.txt";
 		File file = new File(filePath);
-		byte[] inputArray = Files.readAllBytes(file.toPath());
-		
-		// encrypt and decrypt need the same key.
-        // get AES 256 bits (32 bytes) key
-        SecretKey secretKey = CryptoUtils.getAESKey(256);
+		//byte[] inputArray = Files.readAllBytes(file.toPath());
+		FileInputStream is = new FileInputStream(file);
+		FileOutputStream os = new FileOutputStream(new File("output_aont2.txt"));
+		byte[] inputArray = new byte[4096];
+		int read = 0;
+		while((read = is.read(inputArray)) > 0) {
+			// encrypt and decrypt need the same key.
+	        // get AES 256 bits (32 bytes) key
+	        SecretKey secretKey = CryptoUtils.getAESKey(256);
 
-        // encrypt and decrypt need the same IV.
-        // AES-GCM needs IV 96-bit (12 bytes)
-        byte[] iv = CryptoUtils.getRandomNonce(12);
-		
-		//Fragmentation of inputArray into fragments of different sizes
-		List<byte[]> fragment = aont.splitArray(inputArray);
-		
-		//Encrypt each fragment in parallel
-		List<byte[]> encryptedListBytes = new ArrayList<byte[]>();
-		
-		
-		for (int i=0; i<fragment.size(); i++) {
-			byte encrypt[] = new byte[fragment.get(i).length];
-			encrypt = aes_gcm.encryptWithPrefixIV(fragment.get(i), secretKey, iv);
-			encryptedListBytes.add(encrypt);
-		}
-		
-		
-		
-	/*	IntStream.range(0, fragment.size()).parallel().forEach(i->{
-			encryptedArray[i]=aes.encrypt(Arrays.toString(fragment.get(i)), secretKey);
-		});*/
-		
-		
-		//Apply Bastion AONT to each encrypted fragment in parallel
-	/*	List<byte[]> encryptedListBytes = new ArrayList<byte[]>();
-		for (int i=0; i<encryptedArray.length; i++) {
-			encryptedListBytes.add(encryptedArray[i].getBytes());
-		}*/
-		
-	/*	System.out.println("encryptedListBytes:");
-		for(int i = 0; i < encryptedListBytes.size(); i++) {
-			System.out.println(Arrays.toString(encryptedListBytes.get(i)));
-		}*/
-		
-		
-		int t[] = new int[fragment.size()];
-		IntStream.range(0, t.length).parallel().forEach(i->{
-			t[i]=0;
-		});
-		
-	/*	for (int i=0; i<t.length; i++) {
-			for (int j=0; j<encryptedListBytes.get(i).length; j++) {
-				t[i]=t[i]^encryptedListBytes.get(i)[j];
+	        // encrypt and decrypt need the same IV.
+	        // AES-GCM needs IV 96-bit (12 bytes)
+	        byte[] iv = CryptoUtils.getRandomNonce(12);
+			
+			//Fragmentation of inputArray into fragments of different sizes
+			List<byte[]> fragment = aont.splitArray(inputArray);
+			
+			//Encrypt each fragment in parallel
+			List<byte[]> encryptedListBytes = new ArrayList<byte[]>();
+			
+			
+			for (int i=0; i<fragment.size(); i++) {
+				byte encrypt[] = new byte[fragment.get(i).length];
+				encrypt = aes_gcm.encryptWithPrefixIV(fragment.get(i), secretKey, iv);
+				encryptedListBytes.add(encrypt);
 			}
-		}*/
-		
-		IntStream.range(0, t.length).parallel().forEach(i->{
-			IntStream.range(0, encryptedListBytes.get(i).length).parallel().forEach(j->{
-				t[i]=t[i]^encryptedListBytes.get(i)[j];
+			
+			
+			int t[] = new int[fragment.size()];
+			IntStream.range(0, t.length).parallel().forEach(i->{
+				t[i]=0;
 			});
-		});
-		
-		IntStream.range(0, t.length).parallel().forEach(i->{
-			IntStream.range(0, encryptedListBytes.get(i).length ).parallel().forEach(j->{
-				encryptedListBytes.get(i)[j] = (byte) (t[i]^encryptedListBytes.get(i)[j]);
+			
+			
+			IntStream.range(0, t.length).parallel().forEach(i->{
+				IntStream.range(0, encryptedListBytes.get(i).length).parallel().forEach(j->{
+					t[i]=t[i]^encryptedListBytes.get(i)[j];
+				});
 			});
-		});
+			
+			IntStream.range(0, t.length).parallel().forEach(i->{
+				IntStream.range(0, encryptedListBytes.get(i).length ).parallel().forEach(j->{
+					encryptedListBytes.get(i)[j] = (byte) (t[i]^encryptedListBytes.get(i)[j]);
+				});
+			});
+			for (int i=0; i<encryptedListBytes.size(); i++) {
+				for (int j=0; j<encryptedListBytes.get(i).length; j++) {
+					os.write(encryptedListBytes.get(i)[j]);
+				}
+			}
+		}
+		is.close();
+		os.close();
+		
+		
+		
 		
 		
 	/*	System.out.println("encryptedListBytes after AONT:");
@@ -139,7 +133,7 @@ public class aont {
 				}	
 			}	
 		} */
-		System.out.println("Length of encryptedListBytes: "+encryptedListBytes.size());		
+		//System.out.println("Length of encryptedListBytes: "+encryptedListBytes.size());		
 		long endTime = System.nanoTime();
 		System.out.println("Took "+(endTime - startTime) + " ns"); 
 		
