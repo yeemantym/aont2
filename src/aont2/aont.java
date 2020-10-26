@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import aont2.CryptoUtils;
 import aont2.aes_gcm;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -18,22 +19,6 @@ import java.nio.file.Paths;
 
 public class aont {
 	
-	private static String readAllBytesJava7(String filePath) 
-    {
-        String content = "";
- 
-        try
-        {
-            content = new String ( Files.readAllBytes( Paths.get(filePath) ) );
-        } 
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
- 
-        return content;
-    }
-
 	public static int getRandomInt(int min, int max){
 
 	    int x = (int)(Math.random()*((max-min)+1))+min;
@@ -51,6 +36,7 @@ public class aont {
 		  int to = 0;
 		  int slicedItems = 0;
 		  int maxSubArraySize = (items.length)/2;
+		  //int maxSubArraySize = 20;
 		  while (slicedItems < items.length){
 			  int size = getRandomInt(1,maxSubArraySize);
 			  to = from + size;
@@ -67,10 +53,9 @@ public class aont {
 	public static void main(String[] args) throws Exception {
 		long startTime = System.nanoTime();
 		aont aont = new aont();
-		String filePath = "/home/yeeman/Documents/300MB.txt";
-		String originalString = readAllBytesJava7( filePath );
-		//final String secretKey = "ssshhhhhhhhhhh!!!!";
-		byte[] inputArray = originalString.getBytes();
+		String filePath = "/home/yeeman/Documents/2500MB.txt";
+		File file = new File(filePath);
+		byte[] inputArray = Files.readAllBytes(file.toPath());
 		
 		// encrypt and decrypt need the same key.
         // get AES 256 bits (32 bytes) key
