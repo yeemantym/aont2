@@ -59,17 +59,17 @@ public class aont {
 		File file = new File(filePath);
 		//byte[] inputArray = Files.readAllBytes(file.toPath());
 		FileInputStream is = new FileInputStream(file);
-		FileOutputStream os = new FileOutputStream(new File("output_aont2.txt"));
+	//	FileOutputStream os = new FileOutputStream(new File("output_aont2.txt"));
 		byte[] inputArray = new byte[4096];
+		// encrypt and decrypt need the same key.
+        // get AES 256 bits (32 bytes) key
+        SecretKey secretKey = CryptoUtils.getAESKey(256);
+
+        // encrypt and decrypt need the same IV.
+        // AES-GCM needs IV 96-bit (12 bytes)
+        byte[] iv = CryptoUtils.getRandomNonce(12);
 		int read = 0;
 		while((read = is.read(inputArray)) > 0) {
-			// encrypt and decrypt need the same key.
-	        // get AES 256 bits (32 bytes) key
-	        SecretKey secretKey = CryptoUtils.getAESKey(256);
-
-	        // encrypt and decrypt need the same IV.
-	        // AES-GCM needs IV 96-bit (12 bytes)
-	        byte[] iv = CryptoUtils.getRandomNonce(12);
 			
 			//Fragmentation of inputArray into fragments of different sizes
 			List<byte[]> fragment = aont.splitArray(inputArray);
@@ -102,14 +102,14 @@ public class aont {
 					encryptedListBytes.get(i)[j] = (byte) (t[i]^encryptedListBytes.get(i)[j]);
 				});
 			});
-			for (int i=0; i<encryptedListBytes.size(); i++) {
+		/*	for (int i=0; i<encryptedListBytes.size(); i++) {
 				for (int j=0; j<encryptedListBytes.get(i).length; j++) {
 					os.write(encryptedListBytes.get(i)[j]);
 				}
-			}
+			}*/
 		}
 		is.close();
-		os.close();
+	//	os.close();
 		
 		
 		
