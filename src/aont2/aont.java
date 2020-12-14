@@ -4,9 +4,6 @@ package aont2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import javax.crypto.SecretKey;
@@ -16,9 +13,7 @@ import aont2.aes_gcm;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
 
 public class aont {
 	
@@ -87,10 +82,10 @@ public class aont {
         byte[] iv = CryptoUtils.getRandomNonce(12);
         
         //INTSTREAM METHOD
-/*			
+			
 		//Fragmentation of inputArray into 4 fragments of constant size
 		List<byte[]> fragment = aont.splitArrayConstant(inputArray,4);
-			
+		
 		//Encrypt each fragment in parallel
 		List<byte[]> encryptedListBytes = new ArrayList<byte[]>();
 		
@@ -117,60 +112,15 @@ public class aont {
 			for (int j=0; j<encryptedListBytes.get(i).length; j++) {
 				encryptedListBytes.get(i)[j] = (byte) (t[i]^encryptedListBytes.get(i)[j]);
 			}
-		}); */
+		}); 
         
-        final int numberOfThreads = 8;
-		final ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
-		final List<Future<byte[]>> futures = new ArrayList<>();
-	
-		byte encrypt[] = new byte[inputArray.length];
-		executor.submit(() -> {
-			byte[] encryptArray =  aes_gcm.encryptWithPrefixIV(inputArray, secretKey, iv);
-			int t = 0;
-			for (int i=0; i<encryptArray.length; i++) {
-				t=t^encryptArray[i];
-			}
-				
-			byte[] encryptArrayAONT = new byte[encryptArray.length]; 
-			for (int i=0; i<encryptArray.length; i++) {
-				encryptArrayAONT[i]=(byte)(encryptArray[i]^t);
-			}
-			
-			return encryptArrayAONT;	
-		});
-		
-		byte[] encryptArrayAONT = new byte[inputArray.length];
-		for ( Future<byte[]> f : futures ) {
-			  encryptArrayAONT = f.get(); // Will block until the result of the task is available.
-			  // Optionally do something with the result...
-		}
 
-		executor.shutdown(); // Release the threads held by the executor.
-
+		System.out.println("Length of encryptedListBytes: "+encryptedListBytes.size());
 		
-		
-		//PRINT RESULTS TO CONSOLE
-	/*	System.out.println("encryptedListBytes after AONT:");
-		for (int i=0; i<encryptedListBytes.size(); i++) {
-			System.out.print("[");
-			for (int j=0; j<encryptedListBytes.get(i).length; j++) {
-				if (j % 100 == 0 && j > 0) {
-		           System.out.println();
-		        } 
-				System.out.print(encryptedListBytes.get(i)[j]);
-				if (j!=encryptedListBytes.get(i).length-1) {
-					System.out.print(", ");
-				}
-				else {
-					System.out.print("]");
-					System.out.println();
-					System.out.println();
-				}	
-			}	
-		} */
-		System.out.println("Length of encryptedListBytes: "+encryptArrayAONT.length);		
 		long endTime = System.nanoTime(); 
 		System.out.println("Took "+(endTime - startTime) + " ns"); 	
+		
+		
 		
 		
 	}
